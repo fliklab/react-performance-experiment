@@ -1,0 +1,25 @@
+{
+  "name": "@perf-mono/utils",
+  "version": "1.0.0",
+  "description": "Shared utilities for performance measurement monorepo",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./metrics": "./dist/metrics.js",
+    "./api": "./dist/api.js",
+    "./observer": "./dist/observer.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "web-vitals": "^3.5.0"
+  },
+  "devDependencies": {
+    "@perf-mono/types": "workspace:*",
+    "typescript": "^5.0.0"
+  }
+} 
