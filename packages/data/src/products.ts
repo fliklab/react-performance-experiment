@@ -96,7 +96,7 @@ export const createProduct = (id?: string): Product => {
     originalPrice,
     images: Array.from(
       { length: Math.floor(Math.random() * 5) + 1 },
-      (_, i) =>
+      () =>
         `https://picsum.photos/800/600?random=${Math.floor(Math.random() * 1000)}`
     ),
     category: randomChoice(categories),

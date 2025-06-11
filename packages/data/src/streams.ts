@@ -1,4 +1,4 @@
-import type { StreamContent } from "@perf-mono/types";
+// import type { StreamContent } from "@perf-mono/types";
 
 const streamTitles = [
   "Amazing Nature Documentary",

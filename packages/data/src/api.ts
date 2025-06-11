@@ -1,4 +1,4 @@
-import { defaultApiClient, slowApiClient } from "@perf-mono/utils";
+// import { defaultApiClient, slowApiClient } from "@perf-mono/utils";
 import { mockProducts } from "./products";
 import { mockUsers } from "./users";
 
