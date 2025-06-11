@@ -1,0 +1,797 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 성능 측정 모노레포 테스트 계획
+
+## 테스트 전략 개요
+
+### 테스트 목표
+1. **성능 차이 검증**: Before/After 앱 간 명확한 성능 차이 확인
+2. **기능 정확성**: 두 앱의 기능적 동일성 보장
+3. **크로스 플랫폼 호환성**: 다양한 브라우저/디바이스 환경 검증
+4. **성능 회귀 방지**: 지속적인 성능 모니터링
+5. **사용자 경험 검증**: 실제 사용자 시나리오 기반 테스트
+
+### 테스트 피라미드 구조
+```
+                /\
+               /  \
+              / E2E \ (10%)
+             /______\
+            /        \
+           / Integration \ (30%)
+          /______________\
+         /                \
+        /   Unit Tests     \ (60%)
+       /____________________\
+```
+
+---
+
+## 1. 단위 테스트 (Unit Tests)
+
+### 1.1 UI 컴포넌트 테스트
+
+**테스트 대상:**
+- `packages/ui` 내 모든 컴포넌트
+- Props 처리 및 렌더링 결과 검증
+- 이벤트 핸들링 테스트
+
+**테스트 도구:**
+- Jest + React Testing Library
+- @testing-library/jest-dom
+
+**주요 테스트 케이스:**
+
+#### Atoms 컴포넌트
+```typescript
+// Button 컴포넌트 테스트
+describe('Button Component', () => {
+  it('should render with correct text', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByText('Click me')).toBeInTheDocument();
+  });
+
+  it('should handle click events', () => {
+    const handleClick = jest.fn();
+    render(<Button onClick={handleClick}>Click me</Button>);
+    fireEvent.click(screen.getByText('Click me'));
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('should apply correct variant styles', () => {
+    render(<Button variant="primary">Primary</Button>);
+    expect(screen.getByText('Primary')).toHaveClass('btn-primary');
+  });
+});
+```
+
+#### Molecules/Organisms 컴포넌트
+```typescript
+// ProductCard 컴포넌트 테스트
+describe('ProductCard Component', () => {
+  const mockProduct = {
+    id: '1',
+    name: 'Test Product',
+    price: 29.99,
+    image: '/test-image.jpg'
+  };
+
+  it('should display product information correctly', () => {
+    render(<ProductCard product={mockProduct} />);
+    expect(screen.getByText('Test Product')).toBeInTheDocument();
+    expect(screen.getByText('$29.99')).toBeInTheDocument();
+  });
+
+  it('should handle product click', () => {
+    const onProductClick = jest.fn();
+    render(<ProductCard product={mockProduct} onProductClick={onProductClick} />);
+    fireEvent.click(screen.getByTestId('product-card'));
+    expect(onProductClick).toHaveBeenCalledWith('1');
+  });
+});
+```
+
+### 1.2 유틸리티 함수 테스트
+
+**테스트 대상:**
+- `packages/utils` 내 모든 유틸리티 함수
+- 성능 측정 함수
+- API 클라이언트 함수
+- 데이터 변환 함수
+
+**주요 테스트 케이스:**
+
+#### 성능 측정 유틸리티
+```typescript
+// 성능 메트릭 수집 테스트
+describe('Performance Metrics', () => {
+  it('should collect LCP metric correctly', async () => {
+    const mockEntry = {
+      name: 'LCP',
+      startTime: 1500,
+      value: 1500
+    };
+    
+    const metric = collectLCPMetric(mockEntry);
+    expect(metric.name).toBe('LCP');
+    expect(metric.value).toBe(1500);
+  });
+
+  it('should format metrics for analytics', () => {
+    const metrics = formatMetricsForAnalytics([
+      { name: 'LCP', value: 1500 },
+      { name: 'FID', value: 50 }
+    ]);
+    
+    expect(metrics).toEqual({
+      lcp: 1500,
+      fid: 50
+    });
+  });
+});
+```
+
+#### API 클라이언트 테스트
+```typescript
+// API 클라이언트 테스트
+describe('API Client', () => {
+  it('should fetch products with correct parameters', async () => {
+    const mockProducts = [{ id: '1', name: 'Product 1' }];
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockProducts)
+    });
+
+    const products = await fetchProducts({ category: 'electronics' });
+    expect(fetch).toHaveBeenCalledWith('/api/products?category=electronics');
+    expect(products).toEqual(mockProducts);
+  });
+
+  it('should handle API errors gracefully', async () => {
+    jest.spyOn(global, 'fetch').mockRejectedValue(new Error('Network error'));
+    
+    await expect(fetchProducts()).rejects.toThrow('Network error');
+  });
+});
+```
+
+### 1.3 상태 관리 테스트
+
+**테스트 대상:**
+- Zustand 스토어
+- 커스텀 훅
+- 상태 변화 로직
+
+**주요 테스트 케이스:**
+```typescript
+// Zustand 스토어 테스트
+describe('Product Store', () => {
+  it('should add products to store', () => {
+    const store = useProductStore.getState();
+    const products = [{ id: '1', name: 'Product 1' }];
+    
+    store.setProducts(products);
+    expect(store.products).toEqual(products);
+  });
+
+  it('should filter products by category', () => {
+    const store = useProductStore.getState();
+    store.setProducts([
+      { id: '1', name: 'Phone', category: 'electronics' },
+      { id: '2', name: 'Shirt', category: 'clothing' }
+    ]);
+    
+    store.setFilter('electronics');
+    expect(store.filteredProducts).toHaveLength(1);
+    expect(store.filteredProducts[0].name).toBe('Phone');
+  });
+});
+```
+
+---
+
+## 2. 통합 테스트 (Integration Tests)
+
+### 2.1 컴포넌트 통합 테스트
+
+**테스트 목표:**
+- 컴포넌트 간 상호작용 검증
+- 데이터 플로우 테스트
+- 상태 관리 통합 테스트
+
+**주요 테스트 케이스:**
+
+#### 상품 목록 페이지 통합 테스트
+```typescript
+describe('Product List Integration', () => {
+  it('should load and display products', async () => {
+    const mockProducts = [
+      { id: '1', name: 'Product 1', price: 10 },
+      { id: '2', name: 'Product 2', price: 20 }
+    ];
+    
+    jest.spyOn(api, 'fetchProducts').mockResolvedValue(mockProducts);
+    
+    render(<ProductListPage />);
+    
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    
+    await waitFor(() => {
+      expect(screen.getByText('Product 1')).toBeInTheDocument();
+      expect(screen.getByText('Product 2')).toBeInTheDocument();
+    });
+  });
+
+  it('should filter products when search is applied', async () => {
+    render(<ProductListPage />);
+    
+    const searchInput = screen.getByPlaceholderText('Search products...');
+    fireEvent.change(searchInput, { target: { value: 'Product 1' } });
+    
+    await waitFor(() => {
+      expect(screen.getByText('Product 1')).toBeInTheDocument();
+      expect(screen.queryByText('Product 2')).not.toBeInTheDocument();
+    });
+  });
+});
+```
+
+### 2.2 API 통합 테스트
+
+**테스트 목표:**
+- 실제 API 엔드포인트 테스트
+- 데이터 직렬화/역직렬화 검증
+- 에러 처리 시나리오 테스트
+
+**테스트 환경:**
+- Mock Service Worker (MSW) 활용
+- 실제 네트워크 요청 시뮬레이션
+
+**주요 테스트 케이스:**
+```typescript
+// MSW 핸들러 설정
+const handlers = [
+  rest.get('/api/products', (req, res, ctx) => {
+    const category = req.url.searchParams.get('category');
+    const products = mockProducts.filter(p => 
+      !category || p.category === category
+    );
+    return res(ctx.json(products));
+  }),
+  
+  rest.get('/api/products/:id', (req, res, ctx) => {
+    const { id } = req.params;
+    const product = mockProducts.find(p => p.id === id);
+    return product 
+      ? res(ctx.json(product))
+      : res(ctx.status(404), ctx.json({ error: 'Product not found' }));
+  })
+];
+
+// 통합 테스트
+describe('API Integration', () => {
+  it('should fetch products with pagination', async () => {
+    const { data } = await useProducts({ page: 1, limit: 10 });
+    expect(data).toHaveLength(10);
+  });
+
+  it('should handle API rate limiting', async () => {
+    // 503 응답 시뮬레이션
+    server.use(
+      rest.get('/api/products', (req, res, ctx) => 
+        res(ctx.status(503), ctx.json({ error: 'Rate limited' }))
+      )
+    );
+    
+    await expect(fetchProducts()).rejects.toMatchObject({
+      status: 503,
+      message: 'Rate limited'
+    });
+  });
+});
+```
+
+---
+
+## 3. 성능 테스트 (Performance Tests)
+
+### 3.1 Core Web Vitals 테스트
+
+**테스트 목표:**
+- LCP, FID, CLS 임계값 검증
+- Before/After 앱 성능 차이 측정
+- 성능 회귀 방지
+
+**테스트 도구:**
+- Playwright
+- Lighthouse CI
+- web-vitals 라이브러리
+
+**주요 테스트 케이스:**
+
+#### Lighthouse 성능 테스트
+```typescript
+describe('Performance Tests', () => {
+  let browser: Browser;
+  let page: Page;
+
+  beforeAll(async () => {
+    browser = await chromium.launch();
+  });
+
+  beforeEach(async () => {
+    page = await browser.newPage();
+  });
+
+  it('should meet LCP threshold in After app', async () => {
+    await page.goto('http://localhost:3001/products'); // After app
+    
+    const metrics = await page.evaluate(() => {
+      return new Promise((resolve) => {
+        new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          const lcpEntry = entries.find(entry => entry.name === 'LCP');
+          if (lcpEntry) {
+            resolve(lcpEntry.value);
+          }
+        }).observe({ entryTypes: ['largest-contentful-paint'] });
+      });
+    });
+
+    expect(metrics).toBeLessThan(2500); // 2.5초 이하
+  });
+
+  it('should have better performance than Before app', async () => {
+    // Before 앱 성능 측정
+    await page.goto('http://localhost:3000/products');
+    const beforeMetrics = await measurePagePerformance(page);
+    
+    // After 앱 성능 측정
+    await page.goto('http://localhost:3001/products');
+    const afterMetrics = await measurePagePerformance(page);
+    
+    expect(afterMetrics.lcp).toBeLessThan(beforeMetrics.lcp);
+    expect(afterMetrics.fid).toBeLessThan(beforeMetrics.fid);
+    expect(afterMetrics.cls).toBeLessThan(beforeMetrics.cls);
+  });
+});
+```
+
+### 3.2 번들 크기 테스트
+
+**테스트 목표:**
+- JavaScript 번들 크기 임계값 검증
+- 코드 스플리팅 효과 측정
+- 불필요한 의존성 검출
+
+**주요 테스트 케이스:**
+```typescript
+describe('Bundle Size Tests', () => {
+  it('should maintain bundle size under threshold', async () => {
+    const bundleStats = await analyzeBundleSize('./dist');
+    
+    expect(bundleStats.main.size).toBeLessThan(250 * 1024); // 250KB
+    expect(bundleStats.vendor.size).toBeLessThan(500 * 1024); // 500KB
+  });
+
+  it('should have smaller bundle in After app', async () => {
+    const beforeBundleSize = await getBundleSize('./apps/before/dist');
+    const afterBundleSize = await getBundleSize('./apps/after/dist');
+    
+    expect(afterBundleSize.total).toBeLessThan(beforeBundleSize.total * 0.7); // 30% 감소
+  });
+});
+```
+
+### 3.3 메모리 성능 테스트
+
+**테스트 목표:**
+- 메모리 누수 검출
+- 장시간 실행 시 메모리 사용량 모니터링
+- 가비지 컬렉션 최적화 검증
+
+**주요 테스트 케이스:**
+```typescript
+describe('Memory Performance Tests', () => {
+  it('should not have memory leaks in infinite scroll', async () => {
+    await page.goto('/products');
+    
+    const initialMemory = await page.evaluate(() => performance.memory.usedJSHeapSize);
+    
+    // 100번 스크롤하여 새 데이터 로드
+    for (let i = 0; i < 100; i++) {
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await page.waitForTimeout(100);
+    }
+    
+    // 가비지 컬렉션 강제 실행
+    await page.evaluate(() => {
+      if (window.gc) window.gc();
+    });
+    
+    const finalMemory = await page.evaluate(() => performance.memory.usedJSHeapSize);
+    const memoryIncrease = (finalMemory - initialMemory) / initialMemory;
+    
+    expect(memoryIncrease).toBeLessThan(0.5); // 50% 이하 증가
+  });
+});
+```
+
+---
+
+## 4. End-to-End (E2E) 테스트
+
+### 4.1 사용자 시나리오 테스트
+
+**테스트 목표:**
+- 실제 사용자 워크플로우 검증
+- 크로스 브라우저 기능 테스트
+- 반응형 디자인 검증
+
+**테스트 도구:**
+- Playwright
+- 크로스 브라우저 테스트 (Chrome, Firefox, Safari)
+
+**주요 테스트 케이스:**
+
+#### 상품 구매 플로우 테스트
+```typescript
+describe('Product Purchase Flow', () => {
+  test('should complete product purchase successfully', async ({ page }) => {
+    // 메인 페이지 이동
+    await page.goto('/');
+    await expect(page.locator('h1')).toContainText('Product Catalog');
+    
+    // 상품 검색
+    await page.fill('[data-testid="search-input"]', 'smartphone');
+    await page.press('[data-testid="search-input"]', 'Enter');
+    
+    // 상품 선택
+    await page.click('[data-testid="product-card"]:first-child');
+    await expect(page.locator('[data-testid="product-detail"]')).toBeVisible();
+    
+    // 장바구니 추가
+    await page.click('[data-testid="add-to-cart"]');
+    await expect(page.locator('[data-testid="cart-notification"]')).toBeVisible();
+    
+    // 장바구니 확인
+    await page.click('[data-testid="cart-icon"]');
+    await expect(page.locator('[data-testid="cart-item"]')).toHaveCount(1);
+  });
+});
+```
+
+#### 실시간 기능 테스트
+```typescript
+describe('Live Stream Features', () => {
+  test('should update viewer count in real-time', async ({ page }) => {
+    await page.goto('/live');
+    
+    // 초기 시청자 수 확인
+    const initialViewers = await page.textContent('[data-testid="viewer-count"]');
+    
+    // 실시간 업데이트 대기 (WebSocket 연결)
+    await page.waitForTimeout(2000);
+    
+    // 시청자 수 변경 확인
+    const updatedViewers = await page.textContent('[data-testid="viewer-count"]');
+    expect(updatedViewers).not.toBe(initialViewers);
+  });
+
+  test('should display real-time comments', async ({ page }) => {
+    await page.goto('/live');
+    
+    // 댓글 입력
+    await page.fill('[data-testid="comment-input"]', 'Test comment');
+    await page.click('[data-testid="send-comment"]');
+    
+    // 댓글 표시 확인
+    await expect(page.locator('[data-testid="comment-list"]')).toContainText('Test comment');
+  });
+});
+```
+
+### 4.2 크로스 브라우저 테스트
+
+**테스트 브라우저:**
+- Chrome/Chromium
+- Firefox
+- Safari (WebKit)
+- Edge
+
+**주요 테스트 케이스:**
+```typescript
+['chromium', 'firefox', 'webkit'].forEach(browserName => {
+  test.describe(`Cross-browser tests - ${browserName}`, () => {
+    test('should work consistently across browsers', async () => {
+      const browser = await playwright[browserName].launch();
+      const page = await browser.newPage();
+      
+      await page.goto('/products');
+      
+      // 기본 기능 테스트
+      await expect(page.locator('[data-testid="product-grid"]')).toBeVisible();
+      
+      // 성능 메트릭 수집
+      const metrics = await collectPerformanceMetrics(page);
+      expect(metrics.lcp).toBeLessThan(3000); // 브라우저별 임계값 조정
+      
+      await browser.close();
+    });
+  });
+});
+```
+
+### 4.3 모바일 반응형 테스트
+
+**테스트 목표:**
+- 모바일 디바이스 호환성 검증
+- 터치 인터페이스 테스트
+- 모바일 성능 검증
+
+**주요 테스트 케이스:**
+```typescript
+describe('Mobile Responsive Tests', () => {
+  test('should work on mobile devices', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE
+    await page.goto('/products');
+    
+    // 모바일 네비게이션 확인
+    await expect(page.locator('[data-testid="mobile-menu"]')).toBeVisible();
+    
+    // 터치 스크롤 테스트
+    await page.touchscreen.tap(200, 300);
+    await page.evaluate(() => window.scrollBy(0, 500));
+    
+    // 모바일 성능 확인
+    const metrics = await collectPerformanceMetrics(page);
+    expect(metrics.lcp).toBeLessThan(4000); // 모바일 기준
+  });
+});
+```
+
+---
+
+## 5. 접근성 테스트 (Accessibility Tests)
+
+### 5.1 자동화된 접근성 테스트
+
+**테스트 도구:**
+- @axe-core/playwright
+- WAVE 브라우저 확장
+
+**주요 테스트 케이스:**
+```typescript
+describe('Accessibility Tests', () => {
+  test('should have no accessibility violations', async ({ page }) => {
+    await page.goto('/products');
+    
+    const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+    expect(accessibilityScanResults.violations).toEqual([]);
+  });
+
+  test('should be navigable with keyboard only', async ({ page }) => {
+    await page.goto('/');
+    
+    // Tab 키로 모든 인터랙티브 요소 탐색
+    let tabCount = 0;
+    while (tabCount < 20) {
+      await page.keyboard.press('Tab');
+      const focusedElement = await page.evaluate(() => document.activeElement?.tagName);
+      expect(['BUTTON', 'A', 'INPUT', 'SELECT']).toContain(focusedElement);
+      tabCount++;
+    }
+  });
+});
+```
+
+### 5.2 스크린 리더 테스트
+
+**테스트 목표:**
+- ARIA 레이블 검증
+- 의미적 HTML 구조 확인
+- 스크린 리더 호환성 검증
+
+---
+
+## 6. 보안 테스트 (Security Tests)
+
+### 6.1 XSS 방지 테스트
+
+**주요 테스트 케이스:**
+```typescript
+describe('Security Tests', () => {
+  test('should prevent XSS attacks', async ({ page }) => {
+    const maliciousScript = '<script>alert("XSS")</script>';
+    
+    await page.goto('/products');
+    await page.fill('[data-testid="search-input"]', maliciousScript);
+    await page.press('[data-testid="search-input"]', 'Enter');
+    
+    // 스크립트가 실행되지 않음을 확인
+    const alerts = [];
+    page.on('dialog', dialog => {
+      alerts.push(dialog.message());
+      dialog.accept();
+    });
+    
+    await page.waitForTimeout(1000);
+    expect(alerts).toHaveLength(0);
+  });
+});
+```
+
+### 6.2 CSP 헤더 테스트
+
+**테스트 목표:**
+- Content Security Policy 검증
+- 인라인 스크립트 차단 확인
+- 외부 리소스 로딩 제한 검증
+
+---
+
+## 7. 성능 회귀 테스트 (Performance Regression Tests)
+
+### 7.1 지속적 성능 모니터링
+
+**CI/CD 통합:**
+```yaml
+# .github/workflows/performance.yml
+name: Performance Tests
+on: [push, pull_request]
+
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Build applications
+        run: pnpm build
+      
+      - name: Run Lighthouse CI
+        run: |
+          npx lhci autorun
+          npx lhci upload
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+      
+      - name: Performance threshold check
+        run: |
+          npm run test:performance
+          npm run test:bundle-size
+```
+
+### 7.2 성능 임계값 설정
+
+**lighthouse.json 설정:**
+```json
+{
+  "ci": {
+    "assert": {
+      "assertions": {
+        "categories:performance": ["error", {"minScore": 0.9}],
+        "categories:accessibility": ["error", {"minScore": 0.9}],
+        "categories:best-practices": ["error", {"minScore": 0.9}],
+        "categories:seo": ["error", {"minScore": 0.9}]
+      }
+    },
+    "collect": {
+      "url": [
+        "http://localhost:3000/products",
+        "http://localhost:3001/products"
+      ],
+      "numberOfRuns": 3
+    }
+  }
+}
+```
+
+---
+
+## 8. 테스트 실행 및 리포팅
+
+### 8.1 테스트 실행 스크립트
+
+**package.json 스크립트:**
+```json
+{
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest --testPathPattern=unit",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:e2e": "playwright test",
+    "test:performance": "playwright test --grep='Performance'",
+    "test:accessibility": "playwright test --grep='Accessibility'",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
+    "test:ci": "jest --ci --coverage --watchAll=false"
+  }
+}
+```
+
+### 8.2 테스트 리포팅
+
+**커버리지 리포트:**
+- Jest Coverage Report
+- Codecov 통합
+- PR별 커버리지 변화 추적
+
+**성능 리포트:**
+- Lighthouse CI 리포트
+- 번들 분석 리포트
+- 성능 추세 그래프
+
+**테스트 결과 통합:**
+- GitHub Actions 결과 표시
+- Slack 알림 통합
+- 테스트 실패 시 자동 이슈 생성
+
+---
+
+## 9. 테스트 데이터 관리
+
+### 9.1 목업 데이터 전략
+
+**데이터 카테고리:**
+- 상품 데이터 (1000개)
+- 사용자 데이터 (100명)
+- 주문 데이터 (500건)
+- 리뷰 데이터 (2000개)
+
+**데이터 생성 도구:**
+```typescript
+// test/fixtures/productGenerator.ts
+export const generateProducts = (count: number): Product[] => {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `product-${index + 1}`,
+    name: faker.commerce.productName(),
+    price: parseFloat(faker.commerce.price()),
+    description: faker.commerce.productDescription(),
+    image: `https://picsum.photos/400/300?random=${index}`,
+    category: faker.commerce.department(),
+    inStock: faker.datatype.boolean(),
+    rating: faker.datatype.number({ min: 1, max: 5, precision: 0.1 })
+  }));
+};
+```
+
+### 9.2 테스트 환경 데이터베이스
+
+**데이터베이스 마이그레이션:**
+- 테스트 전 데이터 초기화
+- 테스트 간 데이터 격리
+- 테스트 후 정리 작업
+
+---
+
+## 10. 테스트 성공 기준
+
+### 10.1 커버리지 목표
+- **단위 테스트**: 90% 이상
+- **통합 테스트**: 80% 이상
+- **E2E 테스트**: 주요 사용자 플로우 100%
+
+### 10.2 성능 목표
+- **Before 앱**: 의도적 성능 저하 확인
+- **After 앱**: 모든 Core Web Vitals 임계값 통과
+- **성능 향상**: 50% 이상 개선 확인
+
+### 10.3 품질 게이트
+- 모든 테스트 통과
+- 커버리지 임계값 달성
+- 성능 회귀 없음
+- 접근성 기준 충족
+- 보안 검사 통과
+
+이 테스트 계획을 통해 성능 최적화 전후의 명확한 차이를 검증하고, 높은 품질의 모노레포 시스템을 구축할 수 있습니다.

@@ -1,0 +1,35 @@
+---
+description: 
+globs: **/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.md
+alwaysApply: false
+---
+
+@workflow  
+Cursor 프로젝트 자동화는 아래의 단계를 반드시 준수해야 한다.
+
+### 단계별 진행 흐름
+
+1. **요구사항 정의 (requirements.mdc)**  
+- 프로젝트 목적, 기능, 시나리오, 기술 스택 작성  
+- Cursor 프롬프트: `@requirement`
+
+2. **아키텍처 설계 (architecture.mdc)**  
+- 디렉토리 구조, 상태관리, API, UI 설계 작성  
+- Cursor 프롬프트: `@architecture`
+
+3. **작업 계획 수립 (tasks.mdc)**  
+- 기능 단위 ToDo 리스트 작성  
+- 매 작업 후 체크/업데이트  
+- Cursor 프롬프트: `@tasklist`
+
+4. **테스트 코드 작성 (test.mdc)**  
+- 각 기능별 테스트 케이스 작성  
+- 정상/예외/경계 상황 포함  
+- Cursor 프롬프트: `@test`
+
+5. **기능 구현**  
+- ToDo 리스트 기반 작업  
+- 매 실행마다 진행 상황 확인 및 `done.md` 기록  
+- 코드 커밋 및 문서 최신화 필수
+
+🎯 **반드시 위 순서대로 진행 후 다음 단계로 이동**
