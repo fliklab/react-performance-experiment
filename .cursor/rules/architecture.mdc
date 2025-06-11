@@ -1,6 +1,6 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
 # 성능 측정 모노레포 아키텍처 설계
@@ -13,7 +13,8 @@ alwaysApply: false
 performance-measurement-monorepo/
 ├── apps/
 │   ├── before/                 # 최적화 전 사이트 (CSR)
-│   ├── after/                  # 최적화 후 사이트 (SSR/SSG)
+│   ├── after-basic/            # 기본 최적화 사이트 (SSR/SSG)
+│   ├── after-advanced/         # 고급 최적화 사이트 (고급 기법)
 │   ├── analytics/              # 성능 분석 대시보드
 │   └── docs/                   # 프로젝트 문서 사이트
 ├── packages/
@@ -23,7 +24,7 @@ performance-measurement-monorepo/
 │   ├── config/                 # 공통 설정 (ESLint, TypeScript 등)
 │   ├── data/                   # 목업 데이터 및 API 클라이언트
 │   └── performance/            # 성능 측정 유틸리티
-├── docs/
+├── .cursor/rules/
 │   ├── requirements.mdc
 │   ├── architecture.mdc
 │   ├── tasks.mdc
@@ -33,15 +34,16 @@ performance-measurement-monorepo/
 
 ### 2. 기술 스택 매트릭스
 
-| 영역 | 최적화 전 (Before) | 최적화 후 (After) | 공통 |
-|------|-------------------|-------------------|------|
-| **렌더링** | CSR | SSR/SSG | - |
-| **번들링** | 기본 Webpack | Next.js 최적화 | Turborepo |
-| **상태관리** | 기본 useState/useReducer | Zustand + SWR | TypeScript |
-| **스타일링** | 일반 CSS | Tailwind CSS | - |
-| **이미지** | 일반 img 태그 | Next.js Image | - |
-| **코드분할** | 없음 | 동적 import | - |
-| **캐싱** | 기본 브라우저 캐시 | 다층 캐싱 전략 | - |
+| 영역 | 최적화 전 (Before) | 기본 최적화 (After-Basic) | 고급 최적화 (After-Advanced) | 공통 |
+|------|-------------------|---------------------------|-------------------------------|------|
+| **렌더링** | CSR | SSR/SSG | SSR/SSG + 가상화 | - |
+| **번들링** | 기본 Webpack | Next.js 기본 최적화 | Next.js + 고급 코드 스플리팅 | Turborepo |
+| **상태관리** | 기본 useState/useReducer | SWR + 기본 상태관리 | Zustand + SWR + 고급 캐싱 | TypeScript |
+| **스타일링** | 일반 CSS | Tailwind CSS | Tailwind + CSS-in-JS 최적화 | - |
+| **이미지** | 일반 img 태그 | Next.js Image | Next.js Image + WebP/AVIF | - |
+| **코드분할** | 없음 | 라우트 기반 분할 | 라우트 + 컴포넌트 + 동적 분할 | - |
+| **캐싱** | 기본 브라우저 캐시 | Next.js 기본 캐싱 | 다층 캐싱 + 서비스 워커 | - |
+| **성능 기법** | 없음 | 기본 메모이제이션 | 가상화, 워커, WebAssembly | - |
 
 ## 패키지별 상세 설계
 
@@ -78,18 +80,17 @@ before/
 - 동기적 데이터 페칭
 - 메모이제이션 미적용
 
-#### B. `apps/after` - 최적화 후 사이트
+#### B. `apps/after-basic` - 기본 최적화 사이트
 
 **핵심 특징:**
 - Next.js 14 App Router 기반
-- 모든 최적화 기법 적용
-- 성능 우선 설계
+- 기본적인 최적화 기법 적용
+- SSR/SSG 중심 성능 개선
 
 **디렉토리 구조:**
 ```
-after/
+after-basic/
 ├── app/
-│   ├── (dashboard)/            # Route Groups
 │   ├── catalog/
 │   │   ├── loading.tsx         # 로딩 UI
 │   │   ├── error.tsx           # 에러 UI
@@ -103,39 +104,101 @@ after/
 │   ├── ProductCatalog/
 │   │   ├── index.tsx
 │   │   ├── ProductCard.tsx
+│   │   └── ProductSkeleton.tsx
+│   ├── LiveStream/
+│   │   ├── index.tsx
+│   │   └── StreamStatus.tsx
+│   └── ImageGallery/
+│       ├── index.tsx
+│       └── LazyImage.tsx        # 지연 로딩 이미지
+├── lib/
+│   ├── api.ts                   # API 클라이언트
+│   └── utils.ts                 # 기본 유틸리티
+└── next.config.js               # Next.js 기본 설정
+```
+
+**적용된 기본 최적화 기법:**
+- Next.js Image 컴포넌트 활용
+- 라우트 기반 코드 스플리팅
+- 기본 메모이제이션 (React.memo)
+- SWR을 통한 데이터 캐싱
+- Tailwind CSS 최적화
+- 자동 이미지 최적화
+
+#### C. `apps/after-advanced` - 고급 최적화 사이트
+
+**핵심 특징:**
+- 모든 고급 최적화 기법 적용
+- 극한의 성능 최적화 추구
+- 실험적 기법 포함
+
+**디렉토리 구조:**
+```
+after-advanced/
+├── app/
+│   ├── (dashboard)/            # Route Groups
+│   ├── catalog/
+│   │   ├── loading.tsx         # 스켈레톤 로딩
+│   │   ├── error.tsx           # 에러 바운더리
+│   │   └── page.tsx            # SSG + ISR
+│   ├── live/
+│   │   └── page.tsx            # Streaming SSR
+│   ├── gallery/
+│   │   └── page.tsx            # 가상화된 갤러리
+│   └── layout.tsx
+├── components/
+│   ├── ProductCatalog/
+│   │   ├── index.tsx
+│   │   ├── ProductCard.tsx
 │   │   ├── ProductSkeleton.tsx
-│   │   └── VirtualizedList.tsx  # 가상화된 리스트
+│   │   ├── VirtualizedList.tsx  # 가상화된 리스트
+│   │   └── InfiniteScroll.tsx   # 무한 스크롤
 │   ├── LiveStream/
 │   │   ├── index.tsx
 │   │   ├── StreamStatus.tsx
-│   │   └── RealtimeComments.tsx
+│   │   ├── RealtimeComments.tsx
+│   │   └── WebRTCPlayer.tsx     # WebRTC 스트리밍
 │   └── ImageGallery/
 │       ├── index.tsx
-│       ├── LazyImage.tsx        # 지연 로딩 이미지
-│       └── ImageModal.tsx
+│       ├── LazyImage.tsx
+│       ├── ImageModal.tsx
+│       └── ImageWorker.ts       # Web Worker 처리
 ├── lib/
 │   ├── api.ts                   # API 클라이언트
-│   ├── cache.ts                 # 캐싱 전략
-│   └── performance.ts           # 성능 모니터링
-└── middleware.ts                # 미들웨어
+│   ├── cache.ts                 # 다층 캐싱 전략
+│   ├── performance.ts           # 성능 모니터링
+│   ├── workers/                 # Web Workers
+│   │   ├── imageOptimizer.ts
+│   │   └── dataProcessor.ts
+│   └── wasm/                    # WebAssembly 모듈
+│       └── imageFilter.wasm
+├── middleware.ts                # 고급 미들웨어
+├── next.config.js               # 고급 Next.js 설정
+└── service-worker.js            # 서비스 워커
 ```
 
-**적용된 최적화 기법:**
-- Next.js Image 컴포넌트 활용
-- 동적 import를 통한 코드 스플리팅
-- React.memo, useMemo, useCallback 적극 활용
+**적용된 고급 최적화 기법:**
 - 가상화된 리스트 (react-window)
-- SWR을 통한 스마트 캐싱
+- Web Workers를 통한 백그라운드 처리
+- WebAssembly 모듈 활용
+- 서비스 워커 캐싱
+- 고급 코드 스플리팅 (컴포넌트 단위)
+- React.memo, useMemo, useCallback 적극 활용
+- Intersection Observer API 활용
 - Critical CSS 인라인화
 - 프리로딩 및 프리페칭 전략
+- 다층 캐싱 (메모리, 디스크, CDN)
+- Streaming SSR
+- 이미지 포맷 최적화 (WebP, AVIF)
 
-#### C. `apps/analytics` - 성능 분석 대시보드
+#### D. `apps/analytics` - 성능 분석 대시보드
 
 **기능:**
 - 실시간 성능 지표 모니터링
-- 두 사이트 성능 비교 시각화
+- 세 사이트 성능 비교 시각화 (before, after-basic, after-advanced)
 - Core Web Vitals 트래킹
 - 사용자 세션 분석
+- 최적화 효과 시각화
 
 **기술 스택:**
 - Next.js + Recharts (시각화)
@@ -425,12 +488,13 @@ export class PerformanceComparator {
 
   private generateComparison() {
     const beforeMetrics = this.metricsStore.get('before') || [];
-    const afterMetrics = this.metricsStore.get('after') || [];
+    const afterBasicMetrics = this.metricsStore.get('after-basic') || [];
+    const afterAdvancedMetrics = this.metricsStore.get('after-advanced') || [];
     
     return {
-      lcp: this.compareMetrics(beforeMetrics, afterMetrics, 'LCP'),
-      fid: this.compareMetrics(beforeMetrics, afterMetrics, 'FID'),
-      cls: this.compareMetrics(beforeMetrics, afterMetrics, 'CLS'),
+      lcp: this.compareMetrics(beforeMetrics, afterBasicMetrics, afterAdvancedMetrics, 'LCP'),
+      fid: this.compareMetrics(beforeMetrics, afterBasicMetrics, afterAdvancedMetrics, 'FID'),
+      cls: this.compareMetrics(beforeMetrics, afterBasicMetrics, afterAdvancedMetrics, 'CLS'),
     };
   }
 }
@@ -469,12 +533,14 @@ export class PerformanceComparator {
 {
   "builds": [
     { "src": "apps/before/package.json", "use": "@vercel/next" },
-    { "src": "apps/after/package.json", "use": "@vercel/next" },
+    { "src": "apps/after-basic/package.json", "use": "@vercel/next" },
+    { "src": "apps/after-advanced/package.json", "use": "@vercel/next" },
     { "src": "apps/analytics/package.json", "use": "@vercel/next" }
   ],
   "routes": [
     { "src": "/before/(.*)", "dest": "/apps/before/$1" },
-    { "src": "/after/(.*)", "dest": "/apps/after/$1" },
+    { "src": "/after-basic/(.*)", "dest": "/apps/after-basic/$1" },
+    { "src": "/after-advanced/(.*)", "dest": "/apps/after-advanced/$1" },
     { "src": "/analytics/(.*)", "dest": "/apps/analytics/$1" }
   ]
 }
@@ -533,7 +599,8 @@ module.exports = {
       name: 'performance_shell',
       remotes: {
         beforeApp: 'before@http://localhost:3001/remoteEntry.js',
-        afterApp: 'after@http://localhost:3002/remoteEntry.js',
+        afterBasicApp: 'after-basic@http://localhost:3002/remoteEntry.js',
+        afterAdvancedApp: 'after-advanced@http://localhost:3003/remoteEntry.js',
       },
     }),
   ],
@@ -564,4 +631,29 @@ export class ImageOptimizationPlugin implements PerformancePlugin {
 }
 ```
 
-이 아키텍처 설계는 성능 최적화 전후를 체계적으로 비교할 수 있는 확장 가능한 모노레포 구조를 제공하며, 실제 운영 환경에서의 성능 차이를 정확히 측정할 수 있도록 설계되었습니다.
+## 최적화 단계별 성능 비교 전략
+
+### 1. 3단계 성능 비교 매트릭스
+
+| 최적화 단계 | 목표 성능 | 주요 기술 | 예상 개선율 |
+|------------|----------|----------|------------|
+| **Before** | 의도적 저성능 | 기본 React | 기준점 (0%) |
+| **After-Basic** | 기본 최적화 | Next.js SSR/SSG | 40-60% 개선 |
+| **After-Advanced** | 극한 최적화 | 고급 기법 적용 | 70-90% 개선 |
+
+### 2. 단계별 학습 곡선
+
+```mermaid
+graph LR
+    A[Before: 문제 인식] --> B[After-Basic: 기본 해결]
+    B --> C[After-Advanced: 고급 최적화]
+    C --> D[성능 측정 분석]
+```
+
+### 3. 실무 적용 가이드
+
+- **Before**: 일반적인 React 프로젝트의 성능 이슈 재현
+- **After-Basic**: 실무에서 바로 적용 가능한 기본 최적화
+- **After-Advanced**: 고성능이 필요한 서비스를 위한 고급 기법
+
+이 아키텍처 설계는 성능 최적화의 단계적 접근을 통해 학습 효과를 극대화하고, 실제 운영 환경에서의 성능 차이를 정확히 측정할 수 있도록 설계되었습니다.
