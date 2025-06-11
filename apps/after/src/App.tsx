@@ -5,6 +5,8 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PerformanceProvider } from "./contexts/PerformanceContext";
 import { startVitalsCollection } from "@perf-mono/utils";
 import "./App.css";
+import PerformanceDashboard from "./components/PerformanceDashboard";
+import { CartProvider } from "./contexts/CartContext";
 
 // Lazy load components for code splitting
 const Header = lazy(() => import("./components/Header"));
@@ -75,27 +77,32 @@ const App: React.FC = () => {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <PerformanceProvider>
-          <Router>
-            <div className="app-container">
-              <Suspense fallback={<LoadingSpinner />}>
-                <Header />
-              </Suspense>
-
-              <main className="main-content">
+          <CartProvider>
+            <Router>
+              <div className="app-container">
                 <Suspense fallback={<LoadingSpinner />}>
-                  <Routes>
-                    <Route path="/" element={<ProductList />} />
-                    <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/cart" element={<Cart />} />
-                  </Routes>
+                  <Header />
                 </Suspense>
-              </main>
 
-              <Suspense fallback={<LoadingSpinner />}>
-                <Footer />
-              </Suspense>
-            </div>
-          </Router>
+                <main className="main-content">
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <Routes>
+                      <Route path="/" element={<ProductList />} />
+                      <Route path="/product/:id" element={<ProductDetail />} />
+                      <Route path="/cart" element={<Cart />} />
+                    </Routes>
+                  </Suspense>
+                </main>
+
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Footer />
+                </Suspense>
+
+                {/* Performance Dashboard */}
+                <PerformanceDashboard />
+              </div>
+            </Router>
+          </CartProvider>
         </PerformanceProvider>
       </QueryClientProvider>
     </ErrorBoundary>

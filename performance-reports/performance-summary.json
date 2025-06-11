@@ -1,0 +1,56 @@
+{
+  "timestamp": "2025-06-11T23:03:45.001Z",
+  "summary": {
+    "title": "Performance Measurement Monorepo - Before vs After Comparison",
+    "description": "Comprehensive performance analysis of React optimization techniques"
+  },
+  "bundleAnalysis": {
+    "before": {
+      "totalSize": "167.38KB (gzip)",
+      "chunks": 1,
+      "description": "Single large bundle with no optimization"
+    },
+    "after": {
+      "totalSize": "115.24KB (gzip)",
+      "chunks": 16,
+      "description": "Optimized with code splitting and modern techniques"
+    },
+    "improvement": "31% size reduction"
+  },
+  "optimizations": [
+    "React.memo() and useMemo for component optimization",
+    "Code splitting with React.lazy() and Suspense",
+    "Image optimization with AVIF/WebP and lazy loading",
+    "Service Worker for caching and offline support",
+    "React Query for efficient data fetching",
+    "react-window for virtualization",
+    "PWA features for app-like experience"
+  ],
+  "expectedMetrics": {
+    "fcp": {
+      "before": "2500ms",
+      "after": "1200ms",
+      "improvement": "52%"
+    },
+    "lcp": {
+      "before": "4000ms",
+      "after": "1800ms",
+      "improvement": "55%"
+    },
+    "fid": {
+      "before": "300ms",
+      "after": "100ms",
+      "improvement": "67%"
+    },
+    "cls": {
+      "before": "0.25",
+      "after": "0.05",
+      "improvement": "80%"
+    },
+    "tti": {
+      "before": "4500ms",
+      "after": "2000ms",
+      "improvement": "56%"
+    }
+  }
+}
