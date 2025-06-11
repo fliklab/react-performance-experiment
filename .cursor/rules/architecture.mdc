@@ -52,7 +52,7 @@ performance-measurement-monorepo/
 #### A. `apps/before` - 최적화 전 사이트
 
 **핵심 특징:**
-- Create React App 기반 구조
+- Vite+React+Typescript 기반 구조
 - 모든 컴포넌트 즉시 로딩
 - 최소한의 최적화만 적용
 

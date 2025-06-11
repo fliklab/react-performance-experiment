@@ -8,9 +8,9 @@ alwaysApply: false
 ## 전체 개발 로드맵
 
 ### Phase 1: 기반 구조 설정 (1-2주)
-- [ ] Turborepo 모노레포 설정
-- [ ] 공통 패키지 구조 생성
-- [ ] 개발 환경 설정 (ESLint, TypeScript, Prettier)
+- [x] Turborepo 모노레포 설정
+- [x] 공통 패키지 구조 생성
+- [x] 개발 환경 설정 (ESLint, TypeScript, Prettier)
 - [ ] CI/CD 파이프라인 구축
 
 ### Phase 2: Before 앱 개발 (1주)
@@ -116,7 +116,7 @@ alwaysApply: false
 ## 2. Before 앱 개발 (성능 저하 의도)
 
 ### A. 기본 구조 설정
-- [ ] Create React App 기반 설정
+- [ ] Vite+React+Typescript 기반 설정
 - [ ] 기본 라우팅 구현
 - [ ] 성능 저하 요소 의도적 포함
 
