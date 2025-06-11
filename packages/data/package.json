@@ -1,0 +1,27 @@
+{
+  "name": "@perf-mono/data",
+  "version": "1.0.0",
+  "description": "Mock data and API clients for performance measurement monorepo",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./products": "./dist/products.js",
+    "./streams": "./dist/streams.js",
+    "./users": "./dist/users.js",
+    "./comments": "./dist/comments.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "faker": "^6.6.6"
+  },
+  "devDependencies": {
+    "@perf-mono/types": "workspace:*",
+    "@perf-mono/utils": "workspace:*",
+    "typescript": "^5.0.0"
+  }
+}

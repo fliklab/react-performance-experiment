@@ -38,7 +38,8 @@ export default defineConfig({
 
   // 의도적으로 성능을 낮추는 옵션들
   optimizeDeps: {
-    // 사전 번들링 비활성화
-    disabled: true,
+    // 사전 번들링 비활성화 (Vite 5.1+ 방식)
+    noDiscovery: true,
+    include: [],
   },
 });
