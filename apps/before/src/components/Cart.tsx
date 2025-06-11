@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import styled from "styled-components";
 import _ from "lodash";
-import moment from "moment";
+// import moment from "moment";
 import type { Product } from "@perf-mono/types";
 
 const Container = styled.div`
@@ -34,7 +34,7 @@ interface CartProps {
   onUpdateCart: (newCart: Product[]) => void;
 }
 
-const Cart: React.FC<CartProps> = ({ items, onUpdateCart }) => {
+const Cart: React.FC<CartProps> = ({ items, onUpdateCart: _onUpdateCart }) => {
   if (items.length === 0) {
     return (
       <Container>

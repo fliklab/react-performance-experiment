@@ -1,5 +1,21 @@
 // import type { StreamContent } from "@perf-mono/types";
 
+// Temporary interface until StreamContent is added to types package
+interface StreamContent {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  streamUrl: string;
+  streamerName: string;
+  viewerCount: number;
+  isLive: boolean;
+  category: string;
+  tags: string[];
+  startTime: string;
+  endTime?: string;
+}
+
 const streamTitles = [
   "Amazing Nature Documentary",
   "Tech Review: Latest Gadgets",
@@ -47,24 +63,23 @@ const generateId = (): string => {
 };
 
 export const createStream = (id?: string): StreamContent => {
-  const duration = Math.floor(Math.random() * 7200) + 300; // 5분-2시간
-  const views = Math.floor(Math.random() * 1000000);
+  const viewerCount = Math.floor(Math.random() * 10000);
 
   return {
     id: id || generateId(),
     title: randomChoice(streamTitles),
     description: "Amazing content you must watch!",
-    thumbnail: `https://picsum.photos/1280/720?random=${Math.floor(Math.random() * 1000)}`,
-    videoUrl: `https://sample-videos.com/zip/10/mp4/720/${Math.floor(Math.random() * 10)}.mp4`,
-    duration,
-    views,
-    likes: Math.floor(views * Math.random() * 0.1),
+    thumbnailUrl: `https://picsum.photos/1280/720?random=${Math.floor(Math.random() * 1000)}`,
+    streamUrl: `https://sample-videos.com/zip/10/mp4/720/${Math.floor(Math.random() * 10)}.mp4`,
+    streamerName: randomChoice(creators),
+    viewerCount,
+    isLive: Math.random() > 0.9,
     category: randomChoice(streamCategories),
-    creator: randomChoice(creators),
-    createdAt: new Date(
+    tags: ["popular", "trending"],
+    startTime: new Date(
       Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
     ).toISOString(),
-    isLive: Math.random() > 0.9,
+    endTime: Math.random() > 0.5 ? new Date().toISOString() : undefined,
   };
 };
 

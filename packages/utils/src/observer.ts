@@ -61,7 +61,7 @@ export class IntersectionObserverManager {
   unobserve(
     element: Element,
     callback?: ObserverCallback,
-    observerKey?: string
+    _observerKey?: string
   ): void {
     const callbacks = this.callbacks.get(element);
 

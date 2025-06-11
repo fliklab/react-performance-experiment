@@ -301,7 +301,7 @@ const ProductList: React.FC<ProductListProps> = ({
       </p>
 
       <ProductGrid>
-        {processedProducts.map((product, index) => (
+        {processedProducts.map((product) => (
           <ProductCard key={product.id} mouseDistance={product.mouseDistance}>
             <Link to={`/product/${product.id}`}>
               <ProductImage

@@ -1,63 +1,139 @@
-import React, { memo, useMemo, useCallback, useState } from "react";
-import { FixedSizeGrid as Grid } from "react-window";
+import React, { memo, useCallback, useState } from "react";
+import { FixedSizeList as List } from "react-window";
 import { useQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { mockProducts } from "@perf-mono/data";
 import { usePerformance } from "../contexts/PerformanceContext";
 import type { Product } from "@perf-mono/types";
+import OptimizedImage from "./OptimizedImage";
 
 // Optimized product card component
-interface ProductCardProps {
+const ProductCard = memo<{
   product: Product;
+  style?: React.CSSProperties;
   onAddToCart: (product: Product) => void;
-}
-
-const ProductCard = memo<ProductCardProps>(({ product, onAddToCart }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-
+}>(({ product, style, onAddToCart }) => {
   const handleAddToCart = useCallback(() => {
     onAddToCart(product);
   }, [product, onAddToCart]);
 
-  const handleImageLoad = useCallback(() => {
-    setImageLoaded(true);
-  }, []);
-
-  const handleImageError = useCallback(() => {
-    setImageError(true);
-    setImageLoaded(true);
-  }, []);
-
   return (
-    <div className="product-card">
-      <div className="product-image-container">
-        {!imageLoaded && <div className="image-placeholder">Loading...</div>}
-        <img
-          src={imageError ? "/placeholder-image.jpg" : product.images[0]}
-          alt={product.name}
-          className={`product-image ${imageLoaded ? "loaded" : "loading"}`}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-          loading="lazy" // Native lazy loading
-          decoding="async"
-          width="200"
-          height="200"
-        />
-      </div>
+    <div
+      style={{
+        ...style,
+        background: "white",
+        borderRadius: "12px",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+        overflow: "hidden",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+        contain: "layout style paint",
+        cursor: "pointer",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-4px)";
+        e.currentTarget.style.boxShadow = "0 8px 15px rgba(0, 0, 0, 0.15)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+      }}
+    >
+      {/* Optimized Image */}
+      <OptimizedImage
+        src={product.images[0]}
+        alt={product.name}
+        width={280}
+        height={200}
+        className="product-image"
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        placeholder="blur"
+        quality={80}
+      />
 
-      <div className="product-info">
-        <h3 className="product-name">{product.name}</h3>
-        <p className="product-price">${product.price.toFixed(2)}</p>
-        <div className="product-rating">
-          {"★".repeat(Math.floor(product.rating))}
-          {"☆".repeat(5 - Math.floor(product.rating))}
-          <span className="rating-value">({product.rating})</span>
+      {/* Product Info */}
+      <div style={{ padding: "15px" }}>
+        <h3
+          style={{
+            margin: "0 0 8px 0",
+            fontSize: "16px",
+            fontWeight: "600",
+            color: "#1f2937",
+            lineHeight: "1.4",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {product.name}
+        </h3>
+
+        <p
+          style={{
+            margin: "0 0 12px 0",
+            fontSize: "14px",
+            color: "#6b7280",
+            lineHeight: "1.4",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {product.description}
+        </p>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "12px",
+          }}
+        >
+          <span
+            style={{
+              fontSize: "18px",
+              fontWeight: "700",
+              color: "#059669",
+            }}
+          >
+            ${product.price.toFixed(2)}
+          </span>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <span style={{ color: "#fbbf24" }}>★</span>
+            <span style={{ fontSize: "14px", color: "#6b7280" }}>
+              {product.rating.toFixed(1)}
+            </span>
+          </div>
         </div>
+
         <button
-          className="add-to-cart-btn"
           onClick={handleAddToCart}
-          aria-label={`Add ${product.name} to cart`}
+          style={{
+            width: "100%",
+            padding: "8px 16px",
+            background: "#3b82f6",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            fontSize: "14px",
+            fontWeight: "500",
+            cursor: "pointer",
+            transition: "background-color 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#2563eb";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#3b82f6";
+          }}
         >
           Add to Cart
         </button>
@@ -67,36 +143,37 @@ const ProductCard = memo<ProductCardProps>(({ product, onAddToCart }) => {
 });
 ProductCard.displayName = "ProductCard";
 
-// Grid item component for react-window
-interface GridItemProps {
-  columnIndex: number;
-  rowIndex: number;
+// Virtualized row renderer
+const Row = memo<{
+  index: number;
   style: React.CSSProperties;
   data: {
     products: Product[];
-    columnsPerRow: number;
+    itemsPerRow: number;
     onAddToCart: (product: Product) => void;
   };
-}
+}>(({ index, style, data }) => {
+  const { products, itemsPerRow, onAddToCart } = data;
+  const startIndex = index * itemsPerRow;
+  const rowProducts = products.slice(startIndex, startIndex + itemsPerRow);
 
-const GridItem = memo<GridItemProps>(
-  ({ columnIndex, rowIndex, style, data }) => {
-    const { products, columnsPerRow, onAddToCart } = data;
-    const index = rowIndex * columnsPerRow + columnIndex;
-    const product = products[index];
-
-    if (!product) {
-      return <div style={style} />;
-    }
-
-    return (
-      <div style={style} className="grid-item">
-        <ProductCard product={product} onAddToCart={onAddToCart} />
-      </div>
-    );
-  }
-);
-GridItem.displayName = "GridItem";
+  return (
+    <div
+      style={{
+        ...style,
+        display: "flex",
+        gap: "20px",
+        padding: "0 20px",
+      }}
+    >
+      {rowProducts.map((product) => (
+        <div key={product.id} style={{ flex: 1, minWidth: "280px" }}>
+          <ProductCard product={product} onAddToCart={onAddToCart} />
+        </div>
+      ))}
+    </div>
+  );
+});
 
 // Filter component
 const ProductFilters = memo<{
@@ -225,34 +302,10 @@ const ProductList: React.FC = () => {
     setFilters(newFilters);
   }, []);
 
-  // Calculate grid dimensions
-  const { columnsPerRow, itemWidth, itemHeight } = useMemo(() => {
-    const containerWidth = window.innerWidth - 40; // Account for padding
-    const minItemWidth = 280;
-    const cols = Math.floor(containerWidth / minItemWidth);
-    const width = Math.floor(containerWidth / cols);
-
-    return {
-      columnsPerRow: Math.max(1, cols),
-      itemWidth: width,
-      itemHeight: 400,
-    };
-  }, []);
-
-  // Calculate grid rows
-  const rowCount = useMemo(() => {
-    return Math.ceil(products.length / columnsPerRow);
-  }, [products.length, columnsPerRow]);
-
-  // Grid data for react-window
-  const gridData = useMemo(
-    () => ({
-      products,
-      columnsPerRow,
-      onAddToCart: handleAddToCart,
-    }),
-    [products, columnsPerRow, handleAddToCart]
-  );
+  // Calculate virtualization parameters
+  const itemsPerRow = 4; // Adjust based on screen size
+  const rowHeight = 400; // Height of each row
+  const totalRows = Math.ceil(products.length / itemsPerRow);
 
   if (error) {
     return (
@@ -280,19 +333,19 @@ const ProductList: React.FC = () => {
         </div>
       ) : (
         <div className="virtualized-grid-container">
-          <Grid
-            columnCount={columnsPerRow}
-            columnWidth={itemWidth}
-            height={600} // Fixed height for virtualization
-            rowCount={rowCount}
-            rowHeight={itemHeight}
-            itemData={gridData}
-            width={window.innerWidth - 40}
-            overscanRowCount={2} // Render 2 extra rows for smooth scrolling
-            overscanColumnCount={1}
+          <List
+            height={600} // Visible height
+            width={1200} // Fixed width for the list
+            itemCount={totalRows}
+            itemSize={rowHeight}
+            itemData={{
+              products,
+              itemsPerRow,
+              onAddToCart: handleAddToCart,
+            }}
           >
-            {GridItem}
-          </Grid>
+            {Row}
+          </List>
 
           {/* Load more trigger */}
           <div ref={loadMoreRef} className="load-more-trigger">

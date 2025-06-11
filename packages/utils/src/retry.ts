@@ -9,15 +9,16 @@ export interface RetryOptions {
 }
 
 export class RetryError extends Error {
-  constructor(
-    public originalError: Error,
-    public attempts: number,
-    message?: string
-  ) {
+  public originalError: Error;
+  public attempts: number;
+
+  constructor(originalError: Error, attempts: number, message?: string) {
     super(
       message || `Failed after ${attempts} attempts: ${originalError.message}`
     );
     this.name = "RetryError";
+    this.originalError = originalError;
+    this.attempts = attempts;
   }
 }
 
