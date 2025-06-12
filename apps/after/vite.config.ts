@@ -73,7 +73,9 @@ export default defineConfig({
 
   // Optimized dependency pre-bundling
   optimizeDeps: {
+    // React DOM은 포함시켜야 함 (createRoot 때문에)
     include: [
+      "react-dom/client",
       "react",
       "react-dom",
       "react-router-dom",
@@ -83,7 +85,10 @@ export default defineConfig({
       "react-window",
       "react-intersection-observer",
       "web-vitals",
+      "styled-components",
     ],
+    // 다른 라이브러리들은 사전 번들링 제외
+    exclude: ["lodash", "moment"],
   },
 
   server: {
