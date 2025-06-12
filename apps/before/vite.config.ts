@@ -38,8 +38,9 @@ export default defineConfig({
 
   // 의도적으로 성능을 낮추는 옵션들
   optimizeDeps: {
-    // 사전 번들링 비활성화 (Vite 5.1+ 방식)
-    noDiscovery: true,
-    include: [],
+    // React DOM은 포함시켜야 함 (createRoot 때문에)
+    include: ["react-dom/client", "react", "react-dom"],
+    // 다른 라이브러리들은 사전 번들링 제외
+    exclude: ["lodash", "moment"],
   },
 });
