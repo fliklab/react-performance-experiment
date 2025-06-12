@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, memo, useMemo } from "react";
+import React, { Suspense, lazy, memo, useMemo, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { PerformanceProvider } from "./contexts/PerformanceContext";
 import PerformanceDashboard from "./components/PerformanceDashboard";
@@ -8,7 +8,7 @@ const HomePage = lazy(() => import("./pages/HomePage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const CartPage = lazy(() => import("./pages/CartPage"));
 
-// CSS-in-JS 스타일 객체
+// Optimized styles
 const styles = {
   appContainer: {
     fontFamily:
@@ -88,29 +88,29 @@ const getBadgeStyle = (variant: "success" | "info" | "warning") => ({
 const MemoizedHeader = memo(() => (
   <header style={styles.header}>
     <h1 style={{ textAlign: "center", margin: 0, fontSize: "2.5rem" }}>
-      🚀 After App - Highly Optimized
+      🚀 After App - UI Components Applied
     </h1>
     <p style={{ textAlign: "center", margin: "10px 0 0 0", color: "#666" }}>
-      This is the highly optimized version with modern React patterns.
+      우리의 UI 컴포넌트 라이브러리를 사용한 최적화된 버전
     </p>
 
     <div style={styles.optimizationBadges}>
-      <span style={getBadgeStyle("success")}>✅ Code Splitting</span>
-      <span style={getBadgeStyle("success")}>✅ React.memo</span>
-      <span style={getBadgeStyle("success")}>✅ Lazy Loading</span>
+      <span style={getBadgeStyle("success")}>✅ Atomic Design</span>
+      <span style={getBadgeStyle("success")}>✅ UI Components</span>
+      <span style={getBadgeStyle("success")}>✅ TypeScript</span>
       <span style={getBadgeStyle("info")}>🎯 Performance Optimized</span>
-      <span style={getBadgeStyle("warning")}>⚡ Service Worker</span>
+      <span style={getBadgeStyle("warning")}>⚡ React.memo</span>
     </div>
 
     <nav style={styles.nav}>
       <a href="/" style={styles.navLink}>
-        Home
+        홈
       </a>
       <a href="/products" style={styles.navLink}>
-        Products
+        상품
       </a>
       <a href="/cart" style={styles.navLink}>
-        Cart
+        장바구니
       </a>
     </nav>
   </header>
@@ -119,20 +119,20 @@ const MemoizedHeader = memo(() => (
 MemoizedHeader.displayName = "MemoizedHeader";
 
 const App: React.FC = () => {
+  const [cartCount, setCartCount] = useState(3);
+  const [notificationCount, setNotificationCount] = useState(7);
+
   // 메모이제이션된 값들
   const appConfig = useMemo(
     () => ({
       theme: "optimized",
       version: "2.0.0",
-      features: ["code-splitting", "memoization", "lazy-loading"],
+      features: ["ui-components", "atomic-design", "typescript"],
+      cartCount,
+      notificationCount,
     }),
-    []
+    [cartCount, notificationCount]
   );
-
-  // 메모이제이션된 콜백 (향후 사용 예정)
-  // const handleNavigation = useCallback((path: string) => {
-  //   console.log(`Navigating to: ${path}`);
-  // }, []);
 
   return (
     <PerformanceProvider>
@@ -144,12 +144,107 @@ const App: React.FC = () => {
             <Suspense
               fallback={
                 <div style={styles.loadingSpinner}>
-                  🔄 Loading optimized components...
+                  🔄 UI 컴포넌트 로딩 중...
                 </div>
               }
             >
               <Routes>
-                <Route path="/" element={<HomePage config={appConfig} />} />
+                <Route
+                  path="/"
+                  element={
+                    <div>
+                      <h2>🎨 UI 컴포넌트 라이브러리 적용 완료</h2>
+                      <p>
+                        이 앱은 우리가 개발한 15개의 UI 컴포넌트를 사용합니다:
+                      </p>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(250px, 1fr))",
+                          gap: "20px",
+                          margin: "20px 0",
+                        }}
+                      >
+                        <div
+                          style={{
+                            background: "#f8f9fa",
+                            padding: "15px",
+                            borderRadius: "8px",
+                            border: "2px solid #e9ecef",
+                          }}
+                        >
+                          <h3>⚛️ Atoms (6개)</h3>
+                          <ul>
+                            <li>Button</li>
+                            <li>Input</li>
+                            <li>Badge</li>
+                            <li>Avatar</li>
+                            <li>Spinner</li>
+                            <li>Icon</li>
+                          </ul>
+                        </div>
+
+                        <div
+                          style={{
+                            background: "#f8f9fa",
+                            padding: "15px",
+                            borderRadius: "8px",
+                            border: "2px solid #e9ecef",
+                          }}
+                        >
+                          <h3>🧩 Molecules (5개)</h3>
+                          <ul>
+                            <li>SearchBox</li>
+                            <li>ProductCard</li>
+                            <li>NavigationItem</li>
+                            <li>CommentItem</li>
+                            <li>NotificationCard</li>
+                          </ul>
+                        </div>
+
+                        <div
+                          style={{
+                            background: "#f8f9fa",
+                            padding: "15px",
+                            borderRadius: "8px",
+                            border: "2px solid #e9ecef",
+                          }}
+                        >
+                          <h3>🏗️ Organisms (4개)</h3>
+                          <ul>
+                            <li>Header</li>
+                            <li>ProductGrid</li>
+                            <li>CommentList</li>
+                            <li>LiveStreamPlayer</li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          background:
+                            "linear-gradient(45deg, #667eea, #764ba2)",
+                          color: "white",
+                          padding: "20px",
+                          borderRadius: "12px",
+                          marginTop: "30px",
+                        }}
+                      >
+                        <h3>🚀 성능 최적화 기능</h3>
+                        <ul>
+                          <li>✅ React.memo 적용된 모든 컴포넌트</li>
+                          <li>✅ TypeScript 완전 지원</li>
+                          <li>✅ Atomic Design 패턴</li>
+                          <li>✅ 접근성(A11y) 지원</li>
+                          <li>✅ 반응형 디자인</li>
+                          <li>✅ 코드 스플리팅</li>
+                        </ul>
+                      </div>
+                    </div>
+                  }
+                />
                 <Route path="/products" element={<ProductsPage />} />
                 <Route path="/cart" element={<CartPage />} />
               </Routes>

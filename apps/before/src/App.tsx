@@ -60,19 +60,76 @@ const styles = {
   },
 };
 
+// 의도적으로 무거운 컴포넌트 (React.memo 없음)
+const ExpensiveProductCard = ({ product }: { product: any }) => {
+  // 매번 렌더링마다 무거운 계산
+  const expensiveCalculation = Array.from(
+    { length: 1000 },
+    (_, i) => Math.sqrt(i) * Math.sin(i) * Math.cos(i)
+  ).reduce((a, b) => a + b, 0);
+
+  return (
+    <div
+      style={{
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+        padding: "15px",
+        margin: "10px",
+        background: "white",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        transform: `translateY(${expensiveCalculation % 2}px)`, // 의도적으로 불필요한 계산 사용
+      }}
+    >
+      <img
+        src={`https://picsum.photos/200/200?random=${product.id}`}
+        alt={product.name}
+        style={{ width: "100%", height: "150px", objectFit: "cover" }}
+      />
+      <h4>{product.name}</h4>
+      <p>{product.price.toLocaleString()}원</p>
+      <button
+        style={{
+          background: "linear-gradient(45deg, #ff6b6b, #4ecdc4)",
+          color: "white",
+          border: "none",
+          padding: "8px 16px",
+          borderRadius: "5px",
+          cursor: "pointer",
+        }}
+        onClick={() => {
+          // 의도적으로 무거운 클릭 핸들러
+          for (let i = 0; i < 10000; i++) {
+            Math.random();
+          }
+          console.log("Added to cart:", product.name);
+        }}
+      >
+        장바구니 담기
+      </button>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   // 의도적으로 많은 state들
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleString());
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [scrollPosition, setScrollPosition] = useState(0);
   const [renderCount, setRenderCount] = useState(0);
+  const [products] = useState(
+    Array.from({ length: 50 }, (_, i) => ({
+      id: i,
+      name: `상품 ${i + 1}`,
+      price: Math.floor(Math.random() * 100000) + 10000,
+    }))
+  );
 
   // 의도적으로 빈번한 업데이트
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date().toLocaleString());
       setRenderCount((prev) => prev + 1);
-    }, 1000);
+    }, 100); // 매우 빈번한 업데이트
 
     return () => clearInterval(timer);
   }, []);
@@ -95,8 +152,8 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // 의도적으로 무거운 계산 (lodash 없이)
-  const expensiveCalculation = Array.from({ length: 100 }, (_, i) => i).reduce(
+  // 의도적으로 무거운 계산 (매 렌더마다 실행)
+  const expensiveCalculation = Array.from({ length: 5000 }, (_, i) => i).reduce(
     (acc, num) => {
       return (
         acc +
@@ -114,7 +171,7 @@ const App: React.FC = () => {
       <div style={styles.appContainer}>
         <div style={styles.performanceInfo}>
           <div>
-            <strong>Before App - Unoptimized</strong>
+            <strong>🐌 Before App - Unoptimized</strong>
           </div>
           <div>Time: {currentTime}</div>
           <div>
@@ -127,21 +184,21 @@ const App: React.FC = () => {
 
         <header style={styles.header}>
           <h1 style={{ textAlign: "center", margin: 0, fontSize: "2.5rem" }}>
-            🐌 Before App - Intentionally Slow
+            🐌 Before App - 의도적으로 느린 버전
           </h1>
           <p style={{ textAlign: "center", margin: "10px 0 0 0" }}>
-            This version demonstrates poor performance patterns
+            성능 안티 패턴을 보여주는 버전 (UI 컴포넌트 라이브러리 미사용)
           </p>
 
           <nav style={styles.nav}>
             <a href="/" style={styles.navLink}>
-              Home
+              홈
             </a>
             <a href="/products" style={styles.navLink}>
-              Products
+              상품 ({products.length}개)
             </a>
             <a href="/cart" style={styles.navLink}>
-              Cart
+              장바구니
             </a>
           </nav>
         </header>
@@ -153,18 +210,54 @@ const App: React.FC = () => {
                 path="/"
                 element={
                   <div>
-                    <h2>Welcome to the Slow Store</h2>
-                    <p>
-                      This app is intentionally built with performance
-                      anti-patterns:
-                    </p>
-                    <ul>
-                      <li>❌ No React.memo or useMemo</li>
-                      <li>❌ Heavy calculations on every render</li>
-                      <li>❌ Frequent unnecessary re-renders</li>
-                      <li>❌ Large bundle with no code splitting</li>
-                      <li>❌ Heavy animations and effects</li>
-                    </ul>
+                    <h2>🚫 성능 안티 패턴 데모</h2>
+                    <p>이 앱은 의도적으로 성능 안티 패턴을 사용합니다:</p>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(250px, 1fr))",
+                        gap: "15px",
+                        margin: "20px 0",
+                      }}
+                    >
+                      <div
+                        style={{
+                          background: "#ffe6e6",
+                          padding: "15px",
+                          borderRadius: "8px",
+                          border: "2px solid #ffb3b3",
+                        }}
+                      >
+                        <h3>❌ 성능 문제들</h3>
+                        <ul>
+                          <li>React.memo 미사용</li>
+                          <li>무거운 계산 매 렌더마다</li>
+                          <li>불필요한 리렌더링</li>
+                          <li>인라인 스타일 남용</li>
+                          <li>이벤트 핸들러 최적화 안됨</li>
+                        </ul>
+                      </div>
+
+                      <div
+                        style={{
+                          background: "#ffe6e6",
+                          padding: "15px",
+                          borderRadius: "8px",
+                          border: "2px solid #ffb3b3",
+                        }}
+                      >
+                        <h3>🔥 실시간 문제</h3>
+                        <ul>
+                          <li>100ms마다 시간 업데이트</li>
+                          <li>마우스 추적 매 픽셀</li>
+                          <li>스크롤 위치 실시간</li>
+                          <li>5000번 계산 매 렌더</li>
+                          <li>50개 제품 최적화 안됨</li>
+                        </ul>
+                      </div>
+                    </div>
 
                     <div
                       style={{
@@ -175,15 +268,16 @@ const App: React.FC = () => {
                         animation: "pulse 2s infinite",
                       }}
                     >
-                      <h3>Performance Impact Demo</h3>
+                      <h3>📊 성능 비교</h3>
                       <p>
-                        Every second this page re-renders with heavy
-                        calculations!
+                        <strong>Before App</strong>: 매 0.1초마다 리렌더링,
+                        무거운 계산
                       </p>
-                      <p>Mouse tracking: Real-time position updates</p>
                       <p>
-                        Scroll tracking: Continuous scroll position monitoring
+                        <strong>After App</strong>: 최적화된 렌더링, UI 컴포넌트
+                        라이브러리 사용
                       </p>
+                      <p>개발자 도구로 성능 차이를 확인해보세요!</p>
                     </div>
                   </div>
                 }
@@ -193,8 +287,24 @@ const App: React.FC = () => {
                 path="/products"
                 element={
                   <div>
-                    <h2>Product List (Coming Soon)</h2>
-                    <p>This will show 1000+ products without virtualization</p>
+                    <h2>🛍️ 상품 목록 (최적화 안됨)</h2>
+                    <p>모든 상품이 매번 리렌더링됩니다!</p>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(200px, 1fr))",
+                        gap: "10px",
+                      }}
+                    >
+                      {products.map((product) => (
+                        <ExpensiveProductCard
+                          key={product.id}
+                          product={product}
+                        />
+                      ))}
+                    </div>
                   </div>
                 }
               />
@@ -203,28 +313,30 @@ const App: React.FC = () => {
                 path="/cart"
                 element={
                   <div>
-                    <h2>Shopping Cart (Coming Soon)</h2>
-                    <p>This will have inefficient cart management</p>
+                    <h2>🛒 장바구니</h2>
+                    <p>장바구니 기능 (성능 안티 패턴 적용)</p>
+                    <div
+                      style={{
+                        background: "#f0f0f0",
+                        padding: "20px",
+                        borderRadius: "8px",
+                        marginTop: "20px",
+                      }}
+                    >
+                      <p>현재 시간: {currentTime}</p>
+                      <p>
+                        마우스 위치: ({mousePosition.x}, {mousePosition.y})
+                      </p>
+                      <p>렌더링 횟수: {renderCount}</p>
+                    </div>
                   </div>
                 }
               />
             </Routes>
           </main>
+
           <PerformanceDashboard />
         </PerformanceProvider>
-
-        <style>{`
-          @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-          @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-          }
-        `}</style>
       </div>
     </Router>
   );
