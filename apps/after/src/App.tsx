@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, memo, useMemo, useCallback } from "react";
+import React, { Suspense, lazy, memo, useMemo } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { PerformanceProvider } from "./contexts/PerformanceContext";
 import PerformanceDashboard from "./components/PerformanceDashboard";
@@ -129,11 +129,10 @@ const App: React.FC = () => {
     []
   );
 
-  // 메모이제이션된 콜백
-  const handleNavigation = useCallback((path: string) => {
-    // 네비게이션 로직 (실제로는 React Router가 처리)
-    console.log(`Navigating to: ${path}`);
-  }, []);
+  // 메모이제이션된 콜백 (향후 사용 예정)
+  // const handleNavigation = useCallback((path: string) => {
+  //   console.log(`Navigating to: ${path}`);
+  // }, []);
 
   return (
     <PerformanceProvider>

@@ -47,7 +47,7 @@ const styles = {
   },
 };
 
-const HomePage: React.FC<HomePageProps> = memo(({ config }) => {
+const HomePage: React.FC<HomePageProps> = memo(({ config: _config }) => {
   // 메모이제이션된 성능 메트릭
   const performanceMetrics = useMemo(
     () => [
