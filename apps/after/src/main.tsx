@@ -37,8 +37,12 @@ if ("PerformanceObserver" in window) {
   observer.observe({ entryTypes: ["measure", "navigation", "resource"] });
 }
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-);
+const container = document.getElementById("root");
+if (container) {
+  const root = createRoot(container);
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>
+  );
+}
