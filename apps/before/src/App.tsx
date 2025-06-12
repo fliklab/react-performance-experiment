@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import PerformanceDashboard from "./components/PerformanceDashboard";
+import { PerformanceProvider } from "./contexts/PerformanceContext";
 
 // CSS-in-JS 스타일 객체 (의도적으로 무거운 스타일링)
 const styles = {
@@ -144,68 +146,72 @@ const App: React.FC = () => {
           </nav>
         </header>
 
-        <main style={styles.mainContent}>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <div>
-                  <h2>Welcome to the Slow Store</h2>
-                  <p>
-                    This app is intentionally built with performance
-                    anti-patterns:
-                  </p>
-                  <ul>
-                    <li>❌ No React.memo or useMemo</li>
-                    <li>❌ Heavy calculations on every render</li>
-                    <li>❌ Frequent unnecessary re-renders</li>
-                    <li>❌ Large bundle with no code splitting</li>
-                    <li>❌ Heavy animations and effects</li>
-                  </ul>
+        <PerformanceProvider>
+          <main style={styles.mainContent}>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <div>
+                    <h2>Welcome to the Slow Store</h2>
+                    <p>
+                      This app is intentionally built with performance
+                      anti-patterns:
+                    </p>
+                    <ul>
+                      <li>❌ No React.memo or useMemo</li>
+                      <li>❌ Heavy calculations on every render</li>
+                      <li>❌ Frequent unnecessary re-renders</li>
+                      <li>❌ Large bundle with no code splitting</li>
+                      <li>❌ Heavy animations and effects</li>
+                    </ul>
 
-                  <div
-                    style={{
-                      marginTop: "30px",
-                      padding: "20px",
-                      background: "linear-gradient(45deg, #ff9a9e, #fecfef)",
-                      borderRadius: "15px",
-                      animation: "pulse 2s infinite",
-                    }}
-                  >
-                    <h3>Performance Impact Demo</h3>
-                    <p>
-                      Every second this page re-renders with heavy calculations!
-                    </p>
-                    <p>Mouse tracking: Real-time position updates</p>
-                    <p>
-                      Scroll tracking: Continuous scroll position monitoring
-                    </p>
+                    <div
+                      style={{
+                        marginTop: "30px",
+                        padding: "20px",
+                        background: "linear-gradient(45deg, #ff9a9e, #fecfef)",
+                        borderRadius: "15px",
+                        animation: "pulse 2s infinite",
+                      }}
+                    >
+                      <h3>Performance Impact Demo</h3>
+                      <p>
+                        Every second this page re-renders with heavy
+                        calculations!
+                      </p>
+                      <p>Mouse tracking: Real-time position updates</p>
+                      <p>
+                        Scroll tracking: Continuous scroll position monitoring
+                      </p>
+                    </div>
                   </div>
-                </div>
-              }
-            />
+                }
+              />
 
-            <Route
-              path="/products"
-              element={
-                <div>
-                  <h2>Product List (Coming Soon)</h2>
-                  <p>This will show 1000+ products without virtualization</p>
-                </div>
-              }
-            />
+              <Route
+                path="/products"
+                element={
+                  <div>
+                    <h2>Product List (Coming Soon)</h2>
+                    <p>This will show 1000+ products without virtualization</p>
+                  </div>
+                }
+              />
 
-            <Route
-              path="/cart"
-              element={
-                <div>
-                  <h2>Shopping Cart (Coming Soon)</h2>
-                  <p>This will have inefficient cart management</p>
-                </div>
-              }
-            />
-          </Routes>
-        </main>
+              <Route
+                path="/cart"
+                element={
+                  <div>
+                    <h2>Shopping Cart (Coming Soon)</h2>
+                    <p>This will have inefficient cart management</p>
+                  </div>
+                }
+              />
+            </Routes>
+          </main>
+          <PerformanceDashboard />
+        </PerformanceProvider>
 
         <style>{`
           @keyframes gradient {
