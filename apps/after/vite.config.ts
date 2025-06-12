@@ -92,8 +92,13 @@ export default defineConfig({
   },
 
   server: {
-    port: 3002,
-    host: true,
+    port: 3004,
+    host: "localhost",
+    strictPort: true,
+    hmr: {
+      port: 3004,
+      host: "localhost",
+    },
   },
 
   // Preview server configuration

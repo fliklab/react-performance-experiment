@@ -3,11 +3,14 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 
-// Register Service Worker for PWA support
-if ("serviceWorker" in navigator) {
+// Register Service Worker for PWA support (Production only)
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/sw.js")
+      .register("/sw.js", {
+        scope: "/",
+        updateViaCache: "none", // 개발 중 캐시 비활성화
+      })
       .then((registration) => {
         console.log("SW registered: ", registration);
 
@@ -23,6 +26,8 @@ if ("serviceWorker" in navigator) {
         console.log("SW registration failed: ", registrationError);
       });
   });
+} else if (import.meta.env.DEV) {
+  console.log("서비스워커는 프로덕션 환경에서만 활성화됩니다.");
 }
 
 // Performance observer for monitoring
